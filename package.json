@@ -43,7 +43,6 @@
     "url": "https://github.com/adamrusted/mainquest-theme.git"
   },
   "bugs": "https://github.com/adamrusted/mainquest-theme/issues",
-  "contributors": "https://github.com/adamrusted/mainquest-theme/graphs/contributors",
   "devDependencies": {
     "@tryghost/release-utils": "0.8.1",
     "autoprefixer": "10.4.7",
