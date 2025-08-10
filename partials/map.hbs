@@ -16,8 +16,9 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  // Only initialize the map if the map element exists
-  // (it won't exist for members/paid content if the user doesn't have access)
+  /** Only initialize the map if the map element exists
+    (it won't exist for members/paid content if the user doesn't have access)
+    **/
   const mapElement = document.getElementById('map');
   if (!mapElement) return;
 
