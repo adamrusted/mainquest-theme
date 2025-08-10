@@ -1,0 +1,199 @@
+/* Keep video Overlay on top of map layers but below markers/tooltips */
+.leaflet-overlay-pane video {
+  z-index: 650 !important;
+}
+
+/* Hide picture-in-picture button */
+.leaflet-overlay-pane video::-webkit-media-controls-picture-in-picture-button {
+  display: none !important;
+}
+
+/* For Firefox */
+.leaflet-overlay-pane video::-moz-picture-in-picture-button {
+  display: none !important;
+}
+
+/* No attribution, Ghost portal already in bottomright */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Map container styling */
+#map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 400px;
+  background-color: var(--color-darkmode);
+  z-index: 1;
+}
+
+/* For the custom-map template */
+.page-template-custom-map #map {
+  height: calc(100vh - 88px); /* Adjust header height if needed */
+  min-height: calc(100vh - 88px);
+}
+
+/* Make the map container fill its parent */
+.leaflet-map-template {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* Zoom control styling */
+.leaflet-control-zoom {
+  background-color: rgba(21, 23, 26, 0.9) !important;
+  color: #fff !important;
+  border: 1px solid #a5a5a550 !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4) !important;
+}
+.leaflet-control-zoom-out,
+.leaflet-control-zoom-in {
+  background-color: rgba(21, 23, 26, 0.9) !important;
+  color: #fff !important;
+  border: none;
+}
+
+/* Layer control styling */
+.leaflet-control-layers {
+  background-color: rgba(21, 23, 26, 0.9) !important;
+  color: #fff !important;
+  border: 1px solid #a5a5a550 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4) !important;
+}
+.leaflet-control-layers-toggle {
+  background-color: rgba(21, 23, 26, 0.9) !important;
+  border: none;
+  border-radius: 4px !important;
+}
+
+.leaflet-control-layers label {
+  color: var(--ghost-accent-color) !important;
+  font-size: 2.5em !important;
+  font-family: "Waning Star" !important;
+}
+
+.leaflet-control-layers-selector {
+  accent-color: var(--ghost-accent-color) !important;
+}
+
+/* Leaflet tooltip styling */
+.leaflet-tooltip {
+  background-color: rgba(21, 23, 26, 0.9) !important;
+  color: #fff !important;
+  font-family: var(--font-sans) !important;
+  font-size: 2em !important;
+  padding: 8px 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  width: 400px !important;
+  white-space: normal !important;
+}
+.leaflet-tooltip b {
+  font-size: 1.2em !important;
+  font-family: "Waning Star" !important;
+  color: var(--ghost-accent-color) !important;
+}
+/* Tooltip arrow styling */
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+  border-color: transparent;
+}
+
+.leaflet-tooltip-bottom:before {
+  border-bottom-color: var(--ghost-accent-color) !important;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: var(--ghost-accent-color) !important;
+}
+
+.leaflet-tooltip-left:before {
+  border-left-color: var(--ghost-accent-color) !important;
+}
+
+.leaflet-tooltip-right:before {
+  border-right-color: var(--ghost-accent-color) !important;
+}
+
+/* Link bubble styling */
+.tooltip-link-bubble {
+  display: inline-flex !important;
+  float: right;
+  align-items: center !important;
+  background-color: #3f3f3f !important;
+  color: #fff !important;
+  font-size: 0.7em !important;
+  font-weight: bold !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  margin-left: 8px !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.tooltip-link-bubble svg {
+  width: 12px !important;
+  height: 12px !important;
+  margin-left: 4px !important;
+  vertical-align: middle !important;
+}
+
+/* Mobile tooltip hint styling */
+.mobile-tooltip-hint {
+  font-size: 0.6em !important;
+  opacity: 0.8 !important;
+  margin-top: 5px !important;
+  font-style: italic !important;
+  display: none !important; /* Hidden by default, shown only on mobile */
+}
+
+/* Only show the mobile hint on mobile devices */
+@media only screen and (max-width: 768px) {
+  .mobile-tooltip-hint {
+    display: block !important;
+  }
+}
+
+/* Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  background-color: rgba(21, 23, 26, 0.9) !important;
+  border-left: 4px solid var(--ghost-accent-color) !important;
+  color: #fff !important;
+  font-family: var(--font-sans) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+.leaflet-popup-content {
+  color: #fff !important;
+  margin: 12px !important;
+}
+
+/* Mobile adjustments */
+@media only screen and (max-width: 768px) {
+  .leaflet-tooltip {
+    width: 250px !important;
+    padding: 6px 10px !important;
+  }
+}
+
+/* Printer adjustments */
+@media print {
+  .gh-head,
+  .leaflet-control-container,
+  video,
+  .gh-portal-triggerbtn-iframe {
+    display: none !important;
+  }
+}

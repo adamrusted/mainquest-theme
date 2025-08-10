@@ -1,0 +1,545 @@
+<!-- style overrides for Leaflet -->
+<link rel="stylesheet" href="{{asset 'map.css'}}">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<!-- MAP CONTAINTER -->
+        <article class="post-full leaflet-map-template">
+            <div id="map"></div>
+            <div class="map-data-container">{{content}}</div>
+        </article>
+
+
+<!-- Leaflet Script -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{asset "js/leaflet-custom-icons.js"}}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  /** Only initialize the map if the map element exists
+    (it won't exist for members/paid content if the user doesn't have access)
+    **/
+  const mapElement = document.getElementById('map');
+  if (!mapElement) return;
+
+  // Set map height to fill its parent container
+  adjustMapHeight();
+  
+  // Adjust map height on window resize
+  window.addEventListener('resize', adjustMapHeight);
+
+  // Get the featured image URL as fallback
+  const featuredImageUrl = '{{img_url feature_image size="map" format="webp" absolute="true"}}';
+  // Initialize variables for day and night image URLs
+  let dayImageUrl = featuredImageUrl.replace('.webp', '_o.webp').replace('.png', '_o.png').replace('.jpg', '_o.jpg');
+  console.log(dayImageUrl);
+  let nightImageUrl = null;
+  let specialLayers = []; // Array to store special layers
+  
+  // Try to find gallery images in the post content
+  const mapDataContainer = document.querySelector('.map-data-container');
+  if (mapDataContainer) {
+    // Extract gallery images and special layers from the content
+    const { regularImages, specialLayerImages } = extractGalleryImages(mapDataContainer);
+    
+    // Store special layers
+    specialLayers = specialLayerImages;
+    
+    // Handle different scenarios based on what images we have
+    if (specialLayerImages.length > 0) {
+      // If we have special layers, always use featured image as "Day"
+      dayImageUrl = featuredImageUrl;
+      
+      // If we also have regular images, use the first one as "Night"
+      if (regularImages.length > 0) {
+        nightImageUrl = regularImages[0];
+        
+        // If there's a second regular image, it won't be used (only first one as night)
+      }
+    } else if (regularImages.length > 0) {
+      // No special layers, but we have regular images
+      // Use the first regular image as day
+      dayImageUrl = regularImages[0];
+      
+      // If there's a second regular image, use it as night
+      if (regularImages.length > 1) {
+        nightImageUrl = regularImages[1];
+      }
+    }
+    // If no gallery images at all, we'll use the featured image (already set as default)
+  }
+  
+  // Get video overlay from meta tag if it exists
+  const overlayMeta = document.querySelector('meta[name="custom:overlay"]');
+  
+  // Check for overlay from either meta tag or parent container data attribute
+  let overlayFileName = null;
+  let opacity = 0.6;
+  
+  if (overlayMeta) {
+    // 1. First priority: Check meta tags (for code injection)
+    overlayFileName = overlayMeta.getAttribute('content');
+    
+    // Get opacity from meta tag if it exists
+    const opacityMeta = document.querySelector('meta[name="custom:opacity"]');
+    if (opacityMeta) {
+      opacity = parseFloat(opacityMeta.getAttribute('content'));
+    }
+  } else {
+    // 2. Second priority: Check parent container for data attributes
+    const parentContainer = mapElement.closest('.test-map-container, .map-container');
+    if (parentContainer) {
+      if (parentContainer.dataset.overlay) {
+        overlayFileName = parentContainer.dataset.overlay;
+      }
+      if (parentContainer.dataset.opacity) {
+        opacity = parseFloat(parentContainer.dataset.opacity);
+      }
+    }
+  }
+  
+  const videoUrl = overlayFileName ? `/assets/images/overlays/${overlayFileName}` : null;
+  
+  // Load the day image first
+  const img = new Image();
+  img.onload = function () {
+          console.log(this);
+    const w = this.naturalWidth;
+    const h = this.naturalHeight;
+
+    // Full image bounds
+    const imageBounds = [[0, 0], [h, w]];
+
+    // Create the map
+    const map = L.map("map", {
+      crs: L.CRS.Simple,
+      preferCanvas: true,
+      minZoom: -5,
+      maxZoom: 2,
+      zoomSnap: 0,
+      zoomDelta: 0.25,
+      maxBounds: imageBounds,
+      zoomControl: false // defaults to left
+    });
+    
+    // Re-add zoom on right side
+    L.control.zoom({
+      position: 'topright'
+    }).addTo(map);
+
+    // Create base layers for day and night
+    const dayLayer = L.imageOverlay(dayImageUrl, imageBounds);
+    let nightLayer = null;
+    
+    // Add the day layer to the map by default
+    dayLayer.addTo(map);
+    
+    // Create base layers object for the layer control
+    const baseLayers = {
+      "Day": dayLayer
+    };
+    
+    // If we have a night image, create a night layer
+    if (nightImageUrl) {
+      nightLayer = L.imageOverlay(nightImageUrl, imageBounds);
+      baseLayers["Night"] = nightLayer;
+    }
+    
+    // Create special layers if any and add them to base layers (for radio button behavior)
+    specialLayers.forEach(layer => {
+      baseLayers[layer.name] = L.imageOverlay(layer.url, imageBounds);
+    });
+    
+    // Create overlay layers object for optional overlays like atmosphere
+    const overlayLayers = {};
+    
+    // Add video overlay (ie. clouds) only if videoUrl exists
+    if (videoUrl) {
+      // Calculate the maximum dimension (width or height) of the map
+      const maxDimension = Math.max(w, h);
+      
+      // Calculate offsets to center the square overlay
+      const xOffset = (maxDimension - w) / 2;
+      const yOffset = (maxDimension - h) / 2;
+      
+      // Create square bounds centered on the map
+      const videoBounds = [
+        [-yOffset, -xOffset],
+        [h + yOffset, w + xOffset]
+      ];
+      
+      const videoOverlay = L.videoOverlay(videoUrl, videoBounds, {
+        autoplay: true,
+        loop: true,
+        muted: true,
+        opacity: opacity,
+        keepAspectRatio: false
+      }).addTo(map);
+      
+      // Add the video overlay to the overlay layers
+      overlayLayers["Atmosphere"] = videoOverlay;
+      
+      // Function to disable picture-in-picture
+      function disablePiP() {
+        try {
+          const videoElement = videoOverlay.getElement();
+          if (videoElement) {
+            // Set the attribute
+            videoElement.disablePictureInPicture = true;
+            
+            // Also add the attribute directly to the DOM element
+            videoElement.setAttribute('disablePictureInPicture', '');
+          }
+        } catch (e) {
+          console.error("Error disabling picture-in-picture:", e);
+        }
+      }
+      
+      // Try immediately
+      disablePiP();
+      
+      // Also try after a short delay to ensure the video is loaded
+      setTimeout(disablePiP, 100);
+      
+      // Add event listener to ensure video plays when overlay is added back to the map
+      map.on('overlayadd', function(e) {
+        if (e.name === "Atmosphere") {
+          try {
+            const videoElement = videoOverlay.getElement();
+            if (videoElement && videoElement.paused) {
+              videoElement.play()
+                .catch(err => console.error("Error playing video:", err));
+            }
+          } catch (err) {
+            console.error("Error handling overlay add event:", err);
+          }
+        }
+      });
+    }
+    
+    // Add layer control with both base and overlay layers
+    if (Object.keys(baseLayers).length > 1 || Object.keys(overlayLayers).length > 0) {
+      L.control.layers(baseLayers, overlayLayers, {
+        position: 'bottomleft'
+      }).addTo(map);
+    }
+    
+    // Get viewport height and calculate scale to fit height
+    const viewportHeight = window.innerHeight;
+    const scale = viewportHeight / h;
+    const zoom = Math.log2(scale);
+
+    // Clamp to allowed zooms
+    const clampedZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), zoom));
+
+    map.setView([h / 2, w / 2], clampedZoom);
+        map.on("click", function(event) {
+        console.log("Coordinates: " + event.latlng.toString());
+    })
+    
+    // Process map data from post content
+    processMapData(map, h, w);
+
+    // Invalidate map size after a short delay to ensure proper rendering
+    setTimeout(function() {
+      map.invalidateSize();
+    }, 100);
+  };
+
+  img.src = dayImageUrl;
+  
+  // Function to extract gallery images from post content
+  function extractGalleryImages(contentContainer) {
+    const regularImages = [];
+    const specialLayerImages = [];
+    
+    try {
+      // Look for gallery blocks in the content
+      // This is a simplified approach - actual implementation may need to be adjusted
+      // based on how Ghost structures gallery blocks in the DOM
+      
+      // Look for figure elements with gallery class
+      const galleryElements = contentContainer.querySelectorAll('.kg-gallery-container, .kg-gallery-image');
+      
+      let allImages = [];
+      
+      if (galleryElements.length > 0) {
+        // Extract image URLs from gallery
+        galleryElements.forEach(gallery => {
+          const imgElements = gallery.querySelectorAll('img');
+          imgElements.forEach(img => {
+            if (img.src) {
+              allImages.push({
+                url: img.src,
+                alt: img.alt || ''
+              });
+            }
+          });
+        });
+      }
+      
+      // If no gallery found, look for individual images
+      if (allImages.length === 0) {
+        const imgElements = contentContainer.querySelectorAll('img');
+        imgElements.forEach(img => {
+          if (img.src) {
+            allImages.push({
+              url: img.src,
+              alt: img.alt || ''
+            });
+          }
+        });
+      }
+      
+      // Process all images to separate special layers from regular images
+      allImages.forEach(img => {
+        // Check if the image name contains the special layer marker pattern "---layername---"
+        const urlParts = img.url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        
+        // Check for the pattern ---layername---
+        const specialLayerPattern = /---(.+?)---/;
+        const match = filename.match(specialLayerPattern);
+        
+        if (match && match[1]) {
+          // This is a special layer
+          // Extract the layer name (text between the --- markers)
+          let layerName = match[1];
+          
+          // Replace hyphens with spaces for better readability
+          layerName = layerName.replace(/-/g, " ");
+          
+          specialLayerImages.push({
+            url: img.url,
+            name: layerName
+          });
+        } else {
+          // This is a regular image (day/night)
+          regularImages.push(img.url);
+        }
+      });
+    } catch (e) {
+      console.error('Error extracting gallery images:', e);
+    }
+    
+    return { regularImages, specialLayerImages };
+  }
+  
+  // Function to adjust map height based on its container
+  function adjustMapHeight() {
+    const mapElement = document.getElementById('map');
+    if (!mapElement) return;
+    
+    // Check if we're in the custom-map template
+    const isCustomMapTemplate = document.body.classList.contains('page-template-custom-map');
+    
+    if (isCustomMapTemplate) {
+      // For custom-map.hbs, fill the entire site-content area
+      mapElement.style.height = 'calc(100vh - 88px)'; // Adjust header height if needed
+    } else {
+      // For other templates, fill the parent container
+      const parentHeight = mapElement.parentElement.clientHeight;
+      if (parentHeight > 0) {
+        mapElement.style.height = '100%';
+        mapElement.style.minHeight = '400px'; // Set a minimum height for visibility
+      } else {
+        // If parent has no height, set a reasonable default
+        mapElement.style.height = '600px';
+      }
+    }
+  }
+  
+  /**
+   * Process map data from post content
+   * Looks for JSON data in the post content and adds markers and other overlays to the map
+   */
+  function processMapData(map, imageHeight, imageWidth) {
+    const mapDataContainer = document.querySelector('.map-data-container');
+    if (!mapDataContainer) return;
+    
+    try {
+      // Find all pre elements that might contain JSON data
+      const preElements = mapDataContainer.querySelectorAll('pre');
+      
+      preElements.forEach(pre => {
+        try {
+          // Try to parse the content as JSON
+          const content = pre.textContent.trim();
+          if (!content.startsWith('{') && !content.startsWith('[')) return;
+          
+          const mapData = JSON.parse(content);
+          
+          // Process the map data
+          if (mapData) {
+            // Process markers
+            if (mapData.markers && Array.isArray(mapData.markers)) {
+              mapData.markers.forEach(marker => {
+                if (marker.position && Array.isArray(marker.position) && marker.position.length === 2) {
+                  // Convert coordinates to match the image coordinate system if needed
+                  const y = marker.position[0];
+                  const x = marker.position[1];
+                  
+                  let markerOptions = {};
+                  
+                  // Apply custom icon if specified
+                  if (marker.icon) {
+                    markerOptions.icon = L.icon(marker.icon);
+                  } else if (marker.iconType && window.customIcons && window.customIcons[marker.iconType]) {
+                    // Use predefined custom icon if iconType is specified
+                    markerOptions.icon = window.customIcons[marker.iconType];
+                  }
+                  
+                  // Create the marker
+                  const m = L.marker([y, x], markerOptions).addTo(map);
+                  
+                  // Add popup if specified
+                  if (marker.popup) {
+                    m.bindPopup(marker.popup);
+                  }
+                  
+                  // Add tooltip if specified
+                  if (marker.tooltip) {
+                    // If marker has a URL, append appropriate link bubble based on URL
+                    if (marker.url) {
+                      // Get the SVG content from the partial
+                      const linkSvg = `{{> "icons/link"}}`;
+                      
+                      let linkText = '';
+                      
+                      // Check URL to determine what type of link it is
+                      if (marker.url.includes('wiki.mainquest.games')) {
+                        linkText = 'WIKI';
+                      } else if (marker.url.includes('mainquest.games/map')) {
+                        linkText = 'MAP';
+                      } else if (marker.url.includes('discord.')) {
+                        linkText = 'DISCORD';
+                      } else if (marker.url.includes('5e.mainquest.games') || marker.url.includes('5e.tools')) {
+                        linkText = '5eTOOLS';
+                      }
+                      
+                      // Create the bubble with the appropriate text and SVG
+                      const linkBubble = `<span class="tooltip-link-bubble">${linkText} ${linkSvg}</span>`;
+                      
+                      // Create tooltip content with mobile hint
+                      const tooltipContent = `
+                        <div>${marker.tooltip} ${linkBubble}</div>
+                        <div class="mobile-tooltip-hint">Tap again to open link</div>
+                      `;
+                      
+                      m.bindTooltip(tooltipContent, { 
+                        permanent: false,
+                        direction: 'top',
+                        className: 'custom-tooltip',
+                        opacity: 1.0
+                      });
+                    } else {
+                      m.bindTooltip(marker.tooltip);
+                    }
+                  }
+                  
+                  // Add URL link if specified
+                  if (marker.url) {
+                    // Track tooltip state for mobile two-step process
+                    let tooltipOpen = false;
+                    
+                    m.on('click', function(e) {
+                      // Detect if it's a mobile device
+                      const isMobile = window.innerWidth <= 768;
+                      
+                      if (isMobile) {
+                        // On mobile: first click opens tooltip, second click follows link
+                        if (!tooltipOpen) {
+                          // First click: open tooltip
+                          tooltipOpen = true;
+                          m.openTooltip();
+                          
+                          // Prevent default click behavior
+                          L.DomEvent.stopPropagation(e);
+                          L.DomEvent.preventDefault(e);
+                          
+                          // Close tooltip when clicking elsewhere on the map
+                          map.once('click', function() {
+                            tooltipOpen = false;
+                            m.closeTooltip();
+                          });
+                        } else {
+                          // Second click: follow the link
+                          tooltipOpen = false;
+                          window.open(marker.url, marker.target || '_blank');
+                        }
+                      } else {
+                        // On desktop: just follow the link
+                        window.open(marker.url, marker.target || '_blank');
+                      }
+                    });
+                    
+                    // Add cursor style to indicate clickable marker
+                    m.getElement().style.cursor = 'pointer';
+                  }
+                }
+              });
+            }
+            
+            // Process other map elements
+            if (mapData.polylines && Array.isArray(mapData.polylines)) {
+              mapData.polylines.forEach(polyline => {
+                if (polyline.points && Array.isArray(polyline.points)) {
+                  const options = polyline.options || {};
+                  L.polyline(polyline.points, options).addTo(map);
+                }
+              });
+            }
+            
+            if (mapData.polygons && Array.isArray(mapData.polygons)) {
+              mapData.polygons.forEach(polygon => {
+                if (polygon.points && Array.isArray(polygon.points)) {
+                  const options = polygon.options || {};
+                  L.polygon(polygon.points, options).addTo(map);
+                }
+              });
+            }
+            
+            if (mapData.circles && Array.isArray(mapData.circles)) {
+              mapData.circles.forEach(circle => {
+                if (circle.center && Array.isArray(circle.center) && circle.radius) {
+                  const options = circle.options || {};
+                  L.circle(circle.center, { radius: circle.radius, ...options }).addTo(map);
+                }
+              });
+            }
+            
+            if (mapData.rectangles && Array.isArray(mapData.rectangles)) {
+              mapData.rectangles.forEach(rectangle => {
+                if (rectangle.bounds && Array.isArray(rectangle.bounds) && rectangle.bounds.length === 2) {
+                  const options = rectangle.options || {};
+                  L.rectangle(rectangle.bounds, options).addTo(map);
+                }
+              });
+            }
+            
+            if (mapData.view) {
+              if (mapData.view.center && Array.isArray(mapData.view.center) && mapData.view.center.length === 2) {
+                const zoom = mapData.view.zoom !== undefined ? mapData.view.zoom : map.getZoom();
+                map.setView(mapData.view.center, zoom);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing map data JSON:', e);
+        }
+      });
+    } catch (e) {
+      console.error('Error processing map data:', e);
+    }
+  }
+  
+  // Enable debug info with a query parameter
+  if (window.location.search.includes('debug=true')) {
+    document.querySelector('.debug-info').style.display = 'block';
+  }
+});
+
+</script>
+
+
+
