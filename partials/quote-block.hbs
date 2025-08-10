@@ -63,19 +63,20 @@
 
 {{! Script for random quotes }}
 <script>
-  // Default quotes array const defaultQuotes = [ { text: "Ticklecorn", author:
-  "Meepo", link: "#" } ]; // Use passed quotes array or default to the
-  predefined quotes const quotes = (typeof window.customQuotes !== 'undefined')
-  ? window.customQuotes : defaultQuotes; // Set random quote on page load
-  document.addEventListener('DOMContentLoaded', function() { // Only run if the
-  quote elements exist on the page if (document.getElementById('quote-text')) {
-  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  /* Default quotes array */ const defaultQuotes = [ { text: "Ticklecorn",
+  author: "Meepo", link: "#" } ]; /* Use passed quotes array or default to the
+  predefined quotes */ const quotes = (typeof window.customQuotes !==
+  'undefined') ? window.customQuotes : defaultQuotes; /* Set random quote on
+  page load */ document.addEventListener('DOMContentLoaded', function() { /*
+  Only run if the quote elements exist on the page */ if
+  (document.getElementById('quote-text')) { const quote =
+  quotes[Math.floor(Math.random() * quotes.length)];
   document.getElementById('quote-text').textContent = quote.text;
-  document.getElementById('quote-author').textContent = quote.author; // Set the
-  link if it exists if (quote.link && document.getElementById('quote-link')) {
-  document.getElementById('quote-link').href = quote.link; } else if
-  (document.getElementById('quote-link')) { // If no link, make the author text
-  without a link const authorSpan = document.getElementById('quote-author');
+  document.getElementById('quote-author').textContent = quote.author; /* Set the
+  link if it exists */ if (quote.link && document.getElementById('quote-link'))
+  { document.getElementById('quote-link').href = quote.link; } else if
+  (document.getElementById('quote-link')) { /* If no link, make the author text
+  without a link */ const authorSpan = document.getElementById('quote-author');
   const linkElement = document.getElementById('quote-link'); const parentElement
   = linkElement.parentNode; parentElement.replaceChild(authorSpan, linkElement);
   } } });
