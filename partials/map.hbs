@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // Get the featured image URL as fallback
   const featuredImageUrl = '{{img_url feature_image size="map" format="webp" absolute="true"}}';
   // Initialize variables for day and night image URLs
-  let dayImageUrl = featuredImageUrl.replace('.webp', '_o.webp').replace('.png', '_o.png').replace('.jpg', '_o.jpg');
+  // let dayImageUrl = featuredImageUrl.replace('.webp', '_o.webp').replace('.png', '_o.png').replace('.jpg', '_o.jpg');
+  let dayImageUrl = featuredImageUrl;
   console.log(dayImageUrl);
   let nightImageUrl = null;
   let specialLayers = []; // Array to store special layers

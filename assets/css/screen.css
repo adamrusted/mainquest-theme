@@ -36,7 +36,7 @@ production stylesheet in assets/built/screen.css
     --color-yellow: #fecd35;
     --color-red: #f05230;
     --color-darkgrey: #15171A;
-    --color-midgrey: #738a94;
+    --color-midgrey: #bdbdbd;
     --color-lightgrey: #f1f1f1;
     --color-secondary-text: #979797;
     --color-border: #e1e1e1;
@@ -59,7 +59,49 @@ production stylesheet in assets/built/screen.css
 
 }
 
+/* DUNGEON CHURCH FONT */
+    /* Waning Star used with Permission */
+    @font-face {
+        font-family: 'Waning Star';
+        src: url('/assets/ws.woff2') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+    }
+    .post-card-title {
+        font-family: "Waning Star"
+    }
+    .article-title {
+        font-family: "Waning Star";
+    }
+    .footer-cta-title {
+        font-family: "Waning Star"
+    }
+    h1 {
+        font-family: "Waning Star"
+    }
+    h2 {
+        font-family: "Waning Star"
+    }
+    h3 {
+        font-family: "Waning Star"
+    }
+    h4 {
+        font-family: "Waning Star"
+    }
+    /* Sans Serif for menus imported in Code Injection*/
+    /* Not on Author names */
+    .author-name a {
+        font-family: "Bebas Neue", sans-serif !important;
+    }
+    /* navigation links */
+    ul.nav {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.5rem;   
+    } 
 
+/* DUNGEON CHURCH OVERRIDES
+    
 /* 2. Layout - Page building blocks
 /* ---------------------------------------------------------- */
 
