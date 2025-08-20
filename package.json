@@ -84,9 +84,6 @@
       },
       "xl": {
         "width": 2000
-      },
-      "map": {
-        "width": 20000
       }
     },
     "card_assets": true,
